@@ -5,7 +5,11 @@ import { APIRequest, APIResponse } from '@/types';
 import LoadingSpinner from './LoadingSpinner';
 import ToneSlider from './ToneSlider';
 
-export default function ExcuseGenerator() {
+interface ExcuseGeneratorProps {
+  onExcuseGenerated?: (situation: string) => void;
+}
+
+export default function ExcuseGenerator({ onExcuseGenerated }: ExcuseGeneratorProps) {
   const [situation, setSituation] = useState('');
   const [tone, setTone] = useState(50);
   const [excuse, setExcuse] = useState('');
@@ -144,7 +148,7 @@ export default function ExcuseGenerator() {
         <h1 className="main-title">말하는 감자 변명 생성기</h1>
         <p className="subtitle">
           오늘도 감자같은 하루를 보내셨나요?<br />
-          완벽한 변명을 만들어드릴게요!
+      
         </p>
       </div>
 
@@ -242,7 +246,7 @@ export default function ExcuseGenerator() {
       <div className="footer-section">
         말하는 감자들을 위한 변명 생성기 🥔<br />
         <small className="footer-disclaimer">
-          ※ 실제 사용시 책임은 본인에게 있어요!
+          ※ 제작자 : Vivebob / bobstudybob@gmail.com 
         </small>
       </div>
     </div>

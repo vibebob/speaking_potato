@@ -33,14 +33,14 @@ export default function LoadingSpinner() {
   }, []);
   
   return (
-    <div className="loading-spinner">
-      <div className="loading-potato">{POTATO_EMOJIS[potatoIndex]}</div>
-      <div className="loading-dots">
-        <div className="loading-dot"></div>
-        <div className="loading-dot"></div>
-        <div className="loading-dot"></div>
+    <div className="flex flex-col items-center gap-4">
+      <div className="text-4xl animate-bounce">{POTATO_EMOJIS[potatoIndex]}</div>
+      <div className="flex gap-2">
+        <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+        <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+        <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
       </div>
-      <p className="loading-text">
+      <p className="text-amber-700 text-center text-sm">
         {LOADING_MESSAGES[messageIndex]}
       </p>
     </div>

@@ -45,15 +45,15 @@ export default function ToneSlider({ value, onChange }: ToneSliderProps) {
   };
 
   return (
-    <div className="tone-section">
-      <label className="tone-label">감자의 변명 스타일</label>
-      <p className="text-xs mt-1 text-center" style={{ color: 'var(--text-secondary)' }}>
+    <div className="mb-8">
+      <label className="block text-center font-bold text-amber-800 mb-4 text-lg">감자의 변명 스타일</label>
+      <p className="text-sm text-center text-amber-600 mb-6">
         {getToneSubDescription()}
       </p>
       
-      <div className="tone-slider-container">
+      <div className="flex items-center justify-between gap-6 mb-4">
         <span 
-          className="tone-emoji"
+          className="text-3xl transition-all duration-300"
           style={{ fontSize: getLeftEmojiSize() }}
         >
           🥺
@@ -64,17 +64,17 @@ export default function ToneSlider({ value, onChange }: ToneSliderProps) {
           max="100"
           value={displayValue}
           onChange={handleChange}
-          className="tone-slider"
+          className="flex-1 h-3 bg-amber-200 rounded-lg appearance-none cursor-pointer slider"
         />
         <span 
-          className="tone-emoji"
+          className="text-3xl transition-all duration-300"
           style={{ fontSize: getRightEmojiSize() }}
         >
           😎
         </span>
       </div>
       
-      <div className="tone-labels">
+      <div className="flex justify-between text-sm text-amber-600 gap-4">
         <span>순진한 감자</span>
         <span>당당한 감자</span>
       </div>
