@@ -4,12 +4,6 @@ import Link from 'next/link';
 import ExcuseGenerator from '@/components/ExcuseGenerator';
 
 export default function Home() {
-  // 변명 생성 후 콜백 (향후 확장용)
-  const handleExcuseGenerated = (situation: string) => {
-    // 향후 기능 확장을 위한 콜백
-    console.log('변명 생성 완료:', situation);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex flex-col items-center justify-center py-12">
       <div className="w-full max-w-2xl px-6">
@@ -33,7 +27,7 @@ export default function Home() {
 
         {/* 변명 생성기 */}
         <div className="flex justify-center py-4">
-          <ExcuseGenerator onExcuseGenerated={handleExcuseGenerated} />
+          <ExcuseGenerator />
         </div>
       </div>
     </div>

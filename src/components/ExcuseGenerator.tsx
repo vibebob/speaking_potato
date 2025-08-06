@@ -5,11 +5,7 @@ import { APIRequest, APIResponse } from '@/types';
 import LoadingSpinner from './LoadingSpinner';
 import ToneSlider from './ToneSlider';
 
-interface ExcuseGeneratorProps {
-  onExcuseGenerated?: (situation: string) => void;
-}
-
-export default function ExcuseGenerator({ onExcuseGenerated }: ExcuseGeneratorProps) {
+export default function ExcuseGenerator() {
   const [situation, setSituation] = useState('');
   const [tone, setTone] = useState(50);
   const [excuse, setExcuse] = useState('');
@@ -55,7 +51,7 @@ export default function ExcuseGenerator({ onExcuseGenerated }: ExcuseGeneratorPr
 
       setExcuse(data.excuse);
       setShowResult(true);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '변명 생성 중 오류가 발생했습니다');
     } finally {
       setIsLoading(false);
@@ -74,7 +70,7 @@ export default function ExcuseGenerator({ onExcuseGenerated }: ExcuseGeneratorPr
       await navigator.clipboard.writeText(excuse);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('복사 실패:', err);
       // 폴백: 예전 방식으로 복사 시도
       const textArea = document.createElement('textarea');
@@ -85,7 +81,7 @@ export default function ExcuseGenerator({ onExcuseGenerated }: ExcuseGeneratorPr
         document.execCommand('copy');
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
-      } catch (fallbackErr) {
+      } catch (fallbackErr: unknown) {
         console.error('폴백 복사도 실패:', fallbackErr);
         alert('복사에 실패했어요. 수동으로 복사해주세요 😥');
       }
@@ -104,8 +100,8 @@ export default function ExcuseGenerator({ onExcuseGenerated }: ExcuseGeneratorPr
           title: '감자 변명 생성기',
           text: shareText,
         });
-      } catch (err) {
-        if (err.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
           console.error('공유 실패:', err);
           await copyToClipboard();
         }

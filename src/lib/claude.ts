@@ -1,5 +1,3 @@
-import { ToneType } from '@/types';
-
 // Claude API 관련 설정 (현재는 비활성화)
 const CLAUDE_API_ENABLED = false; // 환경변수로 제어 가능
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -35,8 +33,8 @@ export function buildClaudePrompt(situation: string, toneValue: number): string 
 
 // 나중에 Claude API 활성화할 때 사용할 함수
 export async function generateExcuseWithClaude(
-  situation: string, 
-  toneValue: number
+  _situation: string, 
+  _toneValue: number
 ): Promise<string | null> {
   if (!CLAUDE_API_ENABLED || !ANTHROPIC_API_KEY) {
     return null;

@@ -32,12 +32,6 @@ export default function ToneSlider({ value, onChange }: ToneSliderProps) {
     return '2.5rem';
   };
 
-  const getToneDescription = () => {
-    if (displayValue <= 33) return "순진한 감자";
-    if (displayValue <= 66) return "보통 감자";
-    return "당당한 감자";
-  };
-
   const getToneSubDescription = () => {
     if (displayValue <= 33) return "귀엽고 어리숙한 변명을 만들어드려요 🥔";
     if (displayValue <= 66) return "적당히 솔직한 변명을 만들어드려요 😊";

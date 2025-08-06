@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // 데이터베이스 연결 테스트 함수
 export async function testDatabaseConnection() {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('community_posts')
       .select('count')
       .limit(1)
