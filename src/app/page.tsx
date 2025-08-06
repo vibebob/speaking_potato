@@ -15,8 +15,8 @@ export default function Home() {
       <div className="w-full max-w-2xl px-6">
         {/* 네비게이션 탭 */}
         <div className="pb-6 flex justify-center">
-          <div className="flex bg-white rounded-2xl shadow-lg p-2 border-2 border-amber-200 w-[600px]">
-            <button className="flex-1 text-center py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md">
+          <div className="flex bg-white rounded-2xl shadow-lg p-1 border-2 border-amber-200 w-[600px]">
+            <button className="flex-1 text-center py-3 px-4 rounded-xl font-bold bg-amber-500 text-white shadow-md transition-all">
               <span className="text-lg mr-2">🥔</span>
               변명 생성기
             </button>

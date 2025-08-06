@@ -1,37 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { togglePostLike, getClientIP } from '@/lib/community-service';
+import { toggleLike } from '@/lib/supabase';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { postId: string } }
 ) {
   try {
-    const { postId } = params;
+    const postId = params.postId;
     
-    if (!postId) {
-      return NextResponse.json(
-        { error: '게시글 ID가 필요합니다' },
-        { status: 400 }
-      );
-    }
+    // 클라이언트 IP 주소 가져오기
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const ip = forwarded ? forwarded.split(',')[0] : realIp || request.ip || '127.0.0.1';
 
-    // 사용자 IP 가져오기
-    const userIP = getClientIP(request.headers);
-
-    const result = await togglePostLike(postId, userIP);
-
-    return NextResponse.json({
-      message: result.liked ? '좋아요가 추가되었습니다' : '좋아요가 취소되었습니다',
-      liked: result.liked,
-      post: result.post
-    });
-
+    // 좋아요 토글 실행
+    const result = await toggleLike(postId, ip);
+    
+    return NextResponse.json(result);
   } catch (error) {
     console.error('좋아요 처리 실패:', error);
-    const errorMessage = error instanceof Error ? error.message : '좋아요 처리에 실패했습니다';
     return NextResponse.json(
-      { error: errorMessage },
-      { status: 400 }
+      { error: '좋아요 처리에 실패했습니다.' },
+      { status: 500 }
     );
   }
 }

@@ -39,6 +39,17 @@ export interface CommunityPost {
   is_active: boolean
 }
 
+// 댓글 타입 정의
+export interface CommunityReply {
+  id: string
+  post_id: string
+  anonymous_name: string
+  content: string
+  created_at: string
+  updated_at: string
+  is_active: boolean
+}
+
 // 게시글 목록 조회
 export async function getCommunityPosts(limit: number = 10) {
   const { data, error } = await supabase
@@ -76,6 +87,45 @@ export async function createCommunityPost(post: {
   }
   
   return data as CommunityPost
+}
+
+// 댓글 목록 조회
+export async function getCommunityReplies(postId: string) {
+  const { data, error } = await supabase
+    .from('community_replies')
+    .select('*')
+    .eq('post_id', postId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+  
+  if (error) {
+    throw error
+  }
+  
+  return data as CommunityReply[]
+}
+
+// 댓글 작성
+export async function createCommunityReply(reply: {
+  post_id: string
+  anonymous_name: string
+  content: string
+}) {
+  const { data, error } = await supabase
+    .from('community_replies')
+    .insert([{
+      post_id: reply.post_id,
+      anonymous_name: reply.anonymous_name,
+      content: reply.content
+    }])
+    .select()
+    .single()
+  
+  if (error) {
+    throw error
+  }
+  
+  return data as CommunityReply
 }
 
 // 좋아요 토글
