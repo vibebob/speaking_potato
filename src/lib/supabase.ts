@@ -1,9 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// 환경 변수 확인
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// 환경 변수가 없으면 기본값 사용
+const finalSupabaseUrl = supabaseUrl || 'https://placeholder.supabase.co'
+const finalSupabaseAnonKey = supabaseAnonKey || 'placeholder-key'
+
+export const supabase = createClient(finalSupabaseUrl, finalSupabaseAnonKey)
 
 // 데이터베이스 연결 테스트 함수
 export async function testDatabaseConnection() {
