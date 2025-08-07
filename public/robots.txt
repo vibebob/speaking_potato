@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://talking-potato.vercel.app/sitemap.xml
+
+# Disallow admin pages
+Disallow: /admin/
+
+# Crawl delay
+Crawl-delay: 1 

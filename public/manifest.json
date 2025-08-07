@@ -1,0 +1,21 @@
+{
+  "name": "말하는 감자 변명 생성기",
+  "short_name": "감자 변명",
+  "description": "말하는 감자 변명 생성기! AI가 완벽한 감자 변명을 만들어드릴게요!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fef3c7",
+  "theme_color": "#f59e0b",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 
