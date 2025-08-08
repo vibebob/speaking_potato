@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { validateInput, validateUsername, checkRateLimit } from '@/lib/security';
 
+
+
 export default function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [replies, setReplies] = useState<{ [postId: string]: CommunityReply[] }>({});
@@ -24,6 +26,38 @@ export default function CommunityPage() {
   useEffect(() => {
     loadPosts();
   }, []);
+
+  // 구조화된 데이터 생성
+  const generateStructuredData = () => {
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "DiscussionForumPosting",
+      "name": "말하는 감자 커뮤니티",
+      "description": "말하는 감자 커뮤니티에서 다른 감자들과 소통해보세요!",
+      "url": "https://talking-potato.vercel.app/community",
+      "author": {
+        "@type": "Organization",
+        "name": "말하는 감자 팀"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "말하는 감자 팀"
+      },
+      "inLanguage": "ko",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "말하는 감자 변명 생성기",
+        "url": "https://talking-potato.vercel.app"
+      }
+    };
+
+    return (
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+    );
+  };
 
   const loadPosts = async () => {
     try {
@@ -170,6 +204,7 @@ export default function CommunityPage() {
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://talking-potato.vercel.app/community" />
         <link rel="canonical" href="https://talking-potato.vercel.app/community" />
+        {generateStructuredData()}
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex flex-col items-center justify-center py-12">
         <div className="w-full max-w-2xl px-8">

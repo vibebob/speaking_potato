@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import StructuredData from "@/components/StructuredData";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "말하는 감자 변명 생성기 🥔 - AI 감자 변명 메이커",
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "your-google-verification-code",
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || "your-google-verification-code",
   },
   alternates: {
     canonical: "https://talking-potato.vercel.app",
@@ -71,8 +72,27 @@ export default function RootLayout({
     <html lang="ko">
       <head>
         <StructuredData />
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content={process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || "your-google-verification-code"} />
       </head>
       <body className="antialiased">
+        {/* Google Analytics */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+              `}
+            </Script>
+          </>
+        )}
         {children}
       </body>
     </html>
