@@ -1,58 +1,45 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function AdminPage() {
+export default function AdminLoginPage() {
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<string>('');
-  const [adminKey, setAdminKey] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-  const testConnection = async () => {
-    setIsLoading(true);
-    setResult('');
-
-    try {
-      const response = await fetch('/api/admin/cleanup');
-      const data = await response.json();
-      
-      if (response.ok) {
-        setResult(`✅ ${data.message}`);
-      } else {
-        setResult(`❌ ${data.message}`);
-      }
-    } catch (error) {
-      setResult(`❌ 연결 테스트 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const runCleanup = async () => {
-    if (!adminKey.trim()) {
-      setResult('❌ 관리자 키를 입력해주세요');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!password.trim()) {
+      setError('암호를 입력해주세요.');
       return;
     }
 
     setIsLoading(true);
-    setResult('');
+    setError('');
 
     try {
       const response = await fetch('/api/admin/cleanup', {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${adminKey}`,
-        },
+          'Authorization': `Bearer ${password}`,
+          'X-Admin-Key': password
+        }
       });
 
-      const data = await response.json();
-      
       if (response.ok) {
-        setResult(`✅ ${data.message}`);
+        // 성공하면 세션에 관리자 인증 정보 저장
+        sessionStorage.setItem('admin_authenticated', 'true');
+        sessionStorage.setItem('admin_token', password);
+        router.push('/admin/dashboard');
       } else {
-        setResult(`❌ ${data.error}`);
+        setError('잘못된 암호입니다.');
       }
-    } catch (error) {
-      setResult(`❌ 정리 작업 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    } catch (err) {
+      console.error('관리자 인증 실패:', err);
+      setError('인증 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -60,87 +47,72 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex flex-col items-center justify-center py-12">
-      <div className="w-full max-w-2xl px-6">
-        <div className="flex justify-center py-4">
-          <div className="main-container">
-            {/* HEADER SECTION */}
-            <div className="header-section">
-              <div className="potato-character">🔧🥔</div>
-              <h1 className="main-title">관리자 대시보드</h1>
-              <p className="subtitle">
-                감자 대나무숲 관리 도구<br />
-                데이터베이스 상태 확인 및 정리 작업
-              </p>
-            </div>
+      <div className="w-full max-w-md px-6">
+        {/* 네비게이션 탭 */}
+        <div className="pb-6 flex justify-center">
+          <div className="flex bg-white rounded-2xl shadow-lg p-1 border-2 border-amber-200 w-[400px]">
+            <button className="flex-1 text-center py-3 px-4 rounded-xl font-bold bg-amber-500 text-white shadow-md transition-all">
+              <span className="text-lg mr-2">🔐</span>
+              관리자 로그인
+            </button>
+          </div>
+        </div>
 
-            {/* 연결 테스트 섹션 */}
-            <div className="input-section">
-              <label className="tone-label">📡 데이터베이스 연결 상태</label>
-              <div className="button-section">
-                <button
-                  onClick={testConnection}
-                  disabled={isLoading}
-                  className="action-btn"
-                >
-                  {isLoading ? '테스트 중...' : '연결 테스트'}
-                </button>
-              </div>
-            </div>
+        {/* 관리자 로그인 폼 */}
+        <div className="bg-white rounded-3xl shadow-xl p-12 border-2 border-amber-200">
+          <div className="text-center mb-8">
+            <div className="text-4xl mb-4">🥔</div>
+            <h1 className="text-2xl font-bold text-amber-800 mb-2">관리자 로그인</h1>
+            <p className="text-gray-600">말하는 감자 변명 생성기 관리자 페이지</p>
+          </div>
 
-            {/* 정리 작업 섹션 */}
-            <div className="input-section">
-              <label className="tone-label">🧹 비활성 게시글 정리</label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                관리자 암호
+              </label>
               <input
                 type="password"
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)}
-                placeholder="관리자 키를 입력하세요"
-                className="situation-input"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="관리자 암호를 입력하세요"
+                className="w-full px-4 py-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                required
               />
-              <div className="text-xs text-text-secondary mt-2">
-                7일 이상 댓글이 없는 게시글을 삭제합니다
-              </div>
-              <div className="button-section">
-                <button
-                  onClick={runCleanup}
-                  disabled={isLoading || !adminKey.trim()}
-                  className="generate-btn"
-                  style={{ minWidth: 'auto', padding: '15px 30px' }}
-                >
-                  {isLoading ? '🧹 정리 중...' : '🧹 정리 실행'}
-                </button>
-              </div>
             </div>
 
-            {/* 결과 표시 */}
-            {result && (
-              <div className="result-section">
-                <div className="result-bubble">
-                  <p className="result-text">{result}</p>
-                </div>
+            {error && (
+              <div className="text-center p-4 bg-red-100 border border-red-300 rounded-lg">
+                <p className="text-red-600 text-sm">{error}</p>
               </div>
             )}
 
-            {/* 사용법 안내 */}
-            <div className="input-section">
-              <label className="tone-label">📖 사용 안내</label>
-              <div className="result-bubble">
-                <div className="text-sm text-gray-600 space-y-2">
-                  <p><strong>연결 테스트:</strong> Supabase 데이터베이스 연결 상태를 확인합니다.</p>
-                  <p><strong>정리 작업:</strong> 7일 이상 댓글이 없는 게시글을 자동으로 삭제합니다.</p>
-                  <p><strong>관리자 키:</strong> 환경 변수 ADMIN_SECRET_KEY에 설정된 값입니다.</p>
-                  <p className="text-amber-600"><strong>주의:</strong> 정리 작업은 되돌릴 수 없습니다!</p>
-                </div>
-              </div>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading || !password.trim()}
+              className="w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 font-bold text-lg shadow-md"
+            >
+              {isLoading ? '🔐 인증 중...' : '🔐 로그인'}
+            </button>
+          </form>
 
-            {/* FOOTER SECTION */}
-            <div className="footer-section">
-              감자 대나무숲 관리자 도구 🔧<br />
-              <small className="footer-disclaimer">
-                ※ 관리자만 접근 가능
-              </small>
-            </div>
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              관리자 권한이 필요합니다.
+            </p>
+          </div>
+        </div>
+
+        {/* 보안 안내 */}
+        <div className="mt-6 text-center">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-amber-800 mb-2">🔒 보안 안내</h3>
+            <p className="text-xs text-amber-700">
+              • 관리자 암호는 안전하게 보관하세요<br/>
+              • 공용 컴퓨터에서는 로그아웃을 잊지 마세요<br/>
+              • 의심스러운 접근 시 즉시 암호를 변경하세요
+            </p>
           </div>
         </div>
       </div>

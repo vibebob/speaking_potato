@@ -144,7 +144,7 @@ export default function ExcuseGenerator() {
         <h1 className="main-title">말하는 감자 변명 생성기</h1>
         <p className="subtitle">
           오늘도 감자같은 하루를 보내셨나요?<br />
-      
+          완벽한 변명을 만들어드릴게요! 🥔
         </p>
       </div>
 
@@ -160,11 +160,11 @@ export default function ExcuseGenerator() {
           className="situation-input"
           aria-label="변명을 생성할 상황을 입력하세요"
         />
-        <div className="text-right text-xs text-text-secondary mt-3">
+        <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '12px' }}>
           {situation.length}/100자
         </div>
         {situation.length > 80 && (
-          <div className="text-right text-xs text-orange-600 mt-2">
+          <div style={{ textAlign: 'right', fontSize: '0.75rem', color: '#ea580c', marginTop: '8px' }}>
             거의 다 채웠어요! 🥔
           </div>
         )}
@@ -187,8 +187,8 @@ export default function ExcuseGenerator() {
 
       {/* ERROR MESSAGE */}
       {error && (
-        <div className="text-center p-4 bg-red-100 border border-red-300 rounded-lg mb-6" role="alert">
-          <p className="text-red-600 text-sm m-0">{error}</p>
+        <div className="error-message" role="alert">
+          <p style={{ margin: 0 }}>{error}</p>
         </div>
       )}
 

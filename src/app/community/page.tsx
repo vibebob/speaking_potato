@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getCommunityPosts, createCommunityPost, getCommunityReplies, createCommunityReply, CommunityPost, CommunityReply } from '@/lib/supabase';
 import Link from 'next/link';
 import Head from 'next/head';
+import { validateInput, validateUsername, checkRateLimit } from '@/lib/security';
 
 export default function CommunityPage() {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -31,8 +32,9 @@ export default function CommunityPage() {
       setPosts(data);
       setError('');
     } catch (err) {
-      setError('게시글을 불러오는데 실패했습니다.');
       console.error('게시글 로드 실패:', err);
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      setError(`게시글을 불러오는데 실패했습니다: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -49,49 +51,38 @@ export default function CommunityPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPost.anonymous_name.trim() || !newPost.content.trim()) {
+    
+    // Rate Limiting 체크
+    if (!checkRateLimit('post_submit')) {
+      alert('너무 빠른 요청입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    // 입력 검증
+    const validatedName = validateUsername(newPost.anonymous_name);
+    const validatedContent = validateInput(newPost.content, 500);
+
+    if (!validatedName.trim() || !validatedContent.trim()) {
       alert('이름과 내용을 모두 입력해주세요.');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      await createCommunityPost(newPost);
+      await createCommunityPost({
+        anonymous_name: validatedName,
+        content: validatedContent,
+        category: newPost.category
+      });
       setNewPost({ anonymous_name: '', content: '', category: 'general' });
       await loadPosts(); // 목록 새로고침
     } catch (err) {
-      alert('게시글 작성에 실패했습니다.');
       console.error('게시글 작성 실패:', err);
+      alert('게시글 작성에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // 좋아요 기능 주석 처리
-  /*
-  const handleLike = async (postId: string) => {
-    try {
-      const response = await fetch(`/api/community/${postId}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('좋아요 처리에 실패했습니다.');
-      }
-
-      const result = await response.json();
-      
-      // 게시글 목록 새로고침
-      await loadPosts();
-    } catch (err) {
-      alert('좋아요 처리에 실패했습니다.');
-      console.error('좋아요 실패:', err);
-    }
-  };
-  */
 
   const toggleReplies = async (postId: string) => {
     const isExpanded = expandedReplies[postId];
@@ -103,14 +94,20 @@ export default function CommunityPage() {
   };
 
   const handleReplySubmit = async (postId: string) => {
-    const reply = newReplies[postId];
-    if (!reply?.anonymous_name.trim() || !reply?.content.trim()) {
-      alert('이름과 내용을 모두 입력해주세요.');
+    // Rate Limiting 체크
+    if (!checkRateLimit('reply_submit')) {
+      alert('너무 빠른 요청입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
-    if (reply.content.length > 50) {
-      alert('댓글은 50자 이하로 작성해주세요.');
+    const reply = newReplies[postId];
+    
+    // 입력 검증
+    const validatedName = validateUsername(reply?.anonymous_name || '');
+    const validatedContent = validateInput(reply?.content || '', 50);
+
+    if (!validatedName.trim() || !validatedContent.trim()) {
+      alert('이름과 내용을 모두 입력해주세요.');
       return;
     }
 
@@ -118,8 +115,8 @@ export default function CommunityPage() {
       setIsSubmittingReply(prev => ({ ...prev, [postId]: true }));
       await createCommunityReply({
         post_id: postId,
-        anonymous_name: reply.anonymous_name,
-        content: reply.content
+        anonymous_name: validatedName,
+        content: validatedContent
       });
       
       // 댓글 입력 초기화
@@ -131,8 +128,8 @@ export default function CommunityPage() {
       // 게시글 목록도 새로고침 (댓글 수 업데이트)
       await loadPosts();
     } catch (err) {
-      alert('댓글 작성에 실패했습니다.');
       console.error('댓글 작성 실패:', err);
+      alert('댓글 작성에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsSubmittingReply(prev => ({ ...prev, [postId]: false }));
     }
@@ -284,16 +281,6 @@ export default function CommunityPage() {
                   
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
-                      {/* 좋아요 버튼 주석 처리 */}
-                      {/*
-                      <button
-                        onClick={() => handleLike(post.id)}
-                        className="flex items-center gap-1 text-amber-600 hover:text-amber-700 transition-colors"
-                      >
-                        <span className="text-base">🥔</span>
-                        <span className="text-sm">{post.likes_count}</span>
-                      </button>
-                      */}
                       <button
                         onClick={() => toggleReplies(post.id)}
                         className="flex items-center gap-1 text-amber-600 hover:text-amber-700 transition-colors bg-amber-50 px-3 py-1 rounded-full border border-amber-200 hover:bg-amber-100"
@@ -310,94 +297,94 @@ export default function CommunityPage() {
                     </span>
                   </div>
 
-                                        {/* 말하는 감자들의 대화 섹션 */}
-                      {expandedReplies[post.id] && (
-                        <div className="border-t border-amber-200 pt-4">
-                          <div className="text-center mb-4">
-                            <span className="text-sm text-amber-600 font-medium">🥔 말하는 감자들의 대화 💬</span>
-                          </div>
-                          
-                          {/* 댓글 목록 */}
-                          {replies[post.id] && replies[post.id].length > 0 && (
-                            <div className="space-y-3 mb-4">
-                              {replies[post.id].map((reply, index) => (
-                                <div key={reply.id} className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border-l-4 border-amber-400 shadow-sm">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">🥔</span>
-                                      <span className="font-medium text-amber-800 text-sm">
-                                        말하는감자_{reply.anonymous_name}
-                                      </span>
-                                      {index === 0 && (
-                                        <span className="bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded-full">
-                                          첫 번째 감자
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="text-xs text-gray-500">
-                                      {formatDate(reply.created_at)}
+                  {/* 말하는 감자들의 대화 섹션 */}
+                  {expandedReplies[post.id] && (
+                    <div className="border-t border-amber-200 pt-4">
+                      <div className="text-center mb-4">
+                        <span className="text-sm text-amber-600 font-medium">🥔 말하는 감자들의 대화 💬</span>
+                      </div>
+                      
+                      {/* 댓글 목록 */}
+                      {replies[post.id] && replies[post.id].length > 0 && (
+                        <div className="space-y-3 mb-4">
+                          {replies[post.id].map((reply, index) => (
+                            <div key={reply.id} className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border-l-4 border-amber-400 shadow-sm">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg">🥔</span>
+                                  <span className="font-medium text-amber-800 text-sm">
+                                    말하는감자_{reply.anonymous_name}
+                                  </span>
+                                  {index === 0 && (
+                                    <span className="bg-amber-200 text-amber-800 text-xs px-2 py-1 rounded-full">
+                                      첫 번째 감자
                                     </span>
-                                  </div>
-                                  <div className="relative">
-                                    <p className="text-gray-700 text-sm leading-relaxed">{reply.content}</p>
-                                    <div className="absolute -bottom-1 -right-1 text-xs text-amber-400">
-                                      🥔
-                                    </div>
-                                  </div>
+                                  )}
                                 </div>
-                              ))}
+                                <span className="text-xs text-gray-500">
+                                  {formatDate(reply.created_at)}
+                                </span>
+                              </div>
+                              <div className="relative">
+                                <p className="text-gray-700 text-sm leading-relaxed">{reply.content}</p>
+                                <div className="absolute -bottom-1 -right-1 text-xs text-amber-400">
+                                  🥔
+                                </div>
+                              </div>
                             </div>
-                          )}
-
-                          {/* 댓글 작성 폼 */}
-                          <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-lg p-4 border-2 border-amber-300">
-                            <div className="text-center mb-3">
-                              <span className="text-sm text-amber-700 font-medium">🥔 당신도 말하는 감자가 되어보세요!</span>
-                            </div>
-                            <div className="flex gap-3 mb-3">
-                              <input
-                                type="text"
-                                value={newReplies[post.id]?.anonymous_name || ''}
-                                onChange={(e) => setNewReplies(prev => ({
-                                  ...prev,
-                                  [post.id]: { ...prev[post.id], anonymous_name: e.target.value }
-                                }))}
-                                placeholder="감자 이름 (예: 감자킹, 감자공주)"
-                                className="flex-1 px-3 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
-                                maxLength={20}
-                              />
-                            </div>
-                            <div className="flex gap-3">
-                              <textarea
-                                value={newReplies[post.id]?.content || ''}
-                                onChange={(e) => setNewReplies(prev => ({
-                                  ...prev,
-                                  [post.id]: { ...prev[post.id], content: e.target.value }
-                                }))}
-                                placeholder="감자스럽게 댓글을 남겨주세요! 🥔 (50자 이하)"
-                                className="flex-1 px-3 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm resize-none bg-white"
-                                rows={2}
-                                maxLength={50}
-                              />
-                              <button
-                                onClick={() => handleReplySubmit(post.id)}
-                                disabled={isSubmittingReply[post.id] || !newReplies[post.id]?.anonymous_name?.trim() || !newReplies[post.id]?.content?.trim()}
-                                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 text-sm whitespace-nowrap font-medium shadow-md"
-                              >
-                                {isSubmittingReply[post.id] ? '🥔 작성 중...' : '🥔 감자 댓글'}
-                              </button>
-                            </div>
-                            <div className="flex justify-between items-center mt-3">
-                              <span className="text-xs text-amber-600">
-                                {(newReplies[post.id]?.content?.length || 0)}/50자
-                              </span>
-                              <span className="text-xs text-amber-500">
-                                🥔 감자들의 대화 공간
-                              </span>
-                            </div>
-                          </div>
+                          ))}
                         </div>
                       )}
+
+                      {/* 댓글 작성 폼 */}
+                      <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-lg p-4 border-2 border-amber-300">
+                        <div className="text-center mb-3">
+                          <span className="text-sm text-amber-700 font-medium">🥔 당신도 말하는 감자가 되어보세요!</span>
+                        </div>
+                        <div className="flex gap-3 mb-3">
+                          <input
+                            type="text"
+                            value={newReplies[post.id]?.anonymous_name || ''}
+                            onChange={(e) => setNewReplies(prev => ({
+                              ...prev,
+                              [post.id]: { ...prev[post.id], anonymous_name: e.target.value }
+                            }))}
+                            placeholder="감자 이름 (예: 감자킹, 감자공주)"
+                            className="flex-1 px-3 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
+                            maxLength={20}
+                          />
+                        </div>
+                        <div className="flex gap-3">
+                          <textarea
+                            value={newReplies[post.id]?.content || ''}
+                            onChange={(e) => setNewReplies(prev => ({
+                              ...prev,
+                              [post.id]: { ...prev[post.id], content: e.target.value }
+                            }))}
+                            placeholder="감자스럽게 댓글을 남겨주세요! 🥔 (50자 이하)"
+                            className="flex-1 px-3 py-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm resize-none bg-white"
+                            rows={2}
+                            maxLength={50}
+                          />
+                          <button
+                            onClick={() => handleReplySubmit(post.id)}
+                            disabled={isSubmittingReply[post.id] || !newReplies[post.id]?.anonymous_name?.trim() || !newReplies[post.id]?.content?.trim()}
+                            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 text-sm whitespace-nowrap font-medium shadow-md"
+                          >
+                            {isSubmittingReply[post.id] ? '🥔 작성 중...' : '🥔 감자 댓글'}
+                          </button>
+                        </div>
+                        <div className="flex justify-between items-center mt-3">
+                          <span className="text-xs text-amber-600">
+                            {(newReplies[post.id]?.content?.length || 0)}/50자
+                          </span>
+                          <span className="text-xs text-amber-500">
+                            🥔 감자들의 대화 공간
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
