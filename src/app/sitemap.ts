@@ -37,7 +37,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       const postsData = fs.readFileSync(postsPath, 'utf-8')
       const posts = JSON.parse(postsData)
       
-      communityPosts = posts.map((post: any) => ({
+      communityPosts = posts.map((post: { id: string; timestamp: string }) => ({
         url: `${baseUrl}/community/${post.id}`,
         lastModified: new Date(post.timestamp),
         changeFrequency: 'weekly' as const,
